@@ -1,0 +1,54 @@
+{
+  "synced_at": "2026-02-01T02:05:24.777913+00:00",
+  "canvas_base_url": "https://canvas.illinois.edu/",
+  "courses": [
+    {
+      "id": 60253,
+      "name": "OPEN LEARNING - 2025 New Student Online Orientation",
+      "url": "https://canvas.illinois.edu/courses/60253",
+      "assignments": []
+    },
+    {
+      "id": 57476,
+      "name": "OPEN LEARNING - SOS for Higher Ed: Suicide Prevention for Students, 2025-26",
+      "url": "https://canvas.illinois.edu/courses/57476",
+      "assignments": []
+    },
+    {
+      "id": 41511,
+      "name": "OPEN LEARNING - Statistics Undergraduate Resources",
+      "url": "https://canvas.illinois.edu/courses/41511",
+      "assignments": []
+    },
+    {
+      "id": 65455,
+      "name": "Spring 2026-ANTH 101-Introduction to Anthropology-Section ONL",
+      "url": "https://canvas.illinois.edu/courses/65455",
+      "assignments": []
+    },
+    {
+      "id": 66465,
+      "name": "Spring 2026-CS 222-Software Design Lab-Section SDL",
+      "url": "https://canvas.illinois.edu/courses/66465",
+      "assignments": []
+    },
+    {
+      "id": 65908,
+      "name": "Spring 2026-CS 411-Database Systems-Sections G3, G4, U3",
+      "url": "https://canvas.illinois.edu/courses/65908",
+      "assignments": []
+    },
+    {
+      "id": 66629,
+      "name": "Spring 2026-STAT 410-Statistics and Probability II-Sections 2GR, 2UG, 3GR, 3UG",
+      "url": "https://canvas.illinois.edu/courses/66629",
+      "assignments": []
+    },
+    {
+      "id": 67957,
+      "name": "Spring 2026-STAT 425-Statistical Modeling I-Sections 1GR, 1UG, 2GR, 2UG",
+      "url": "https://canvas.illinois.edu/courses/67957",
+      "assignments": []
+    }
+  ]
+}
