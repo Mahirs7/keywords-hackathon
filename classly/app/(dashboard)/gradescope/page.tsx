@@ -1,7 +1,7 @@
 'use client';
 
-import Header from '../components/Header';
-import { mockUser, mockGradescopeSubmissions, getGreeting, getFormattedDate } from '../lib/mockData';
+import Header from '../../components/Header';
+import { mockUser, mockGradescopeSubmissions, getGreeting, getFormattedDate } from '../../lib/mockData';
 import { ClipboardCheck, Calendar, Clock, ExternalLink, CheckCircle, AlertCircle, RefreshCw, Upload } from 'lucide-react';
 
 export default function GradescopePage() {

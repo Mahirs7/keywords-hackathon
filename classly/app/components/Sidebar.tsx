@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -9,8 +9,10 @@ import {
   ClipboardCheck, 
   MessageCircle, 
   Settings,
-  ChevronLeft
+  ChevronLeft,
+  LogOut
 } from 'lucide-react';
+import { createClient } from '@/app/lib/supabase/client';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,6 +27,14 @@ const platforms = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0f1419] border-r border-gray-800 flex flex-col">
@@ -90,8 +100,8 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Settings */}
-      <div className="px-4 py-4 border-t border-gray-800">
+      {/* Settings & Logout */}
+      <div className="px-4 py-4 border-t border-gray-800 space-y-2">
         <Link
           href="/settings"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -103,6 +113,13 @@ export default function Sidebar() {
           <Settings className="w-5 h-5" />
           <span className="font-medium">Settings</span>
         </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-red-500/10 hover:text-red-400"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-medium">Sign out</span>
+        </button>
       </div>
     </aside>
   );
