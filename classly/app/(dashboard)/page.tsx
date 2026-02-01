@@ -1,10 +1,10 @@
 'use client';
 
-import Header from './components/Header';
-import PlatformCard from './components/PlatformCard';
-import { DeadlinesList } from './components/DeadlineCard';
-import TodaySchedule from './components/TodaySchedule';
-import AIAssistant from './components/AIAssistant';
+import Header from '../components/Header';
+import PlatformCard from '../components/PlatformCard';
+import { DeadlinesList } from '../components/DeadlineCard';
+import TodaySchedule from '../components/TodaySchedule';
+import AIAssistant from '../components/AIAssistant';
 import { 
   mockUser, 
   mockPlatforms, 
@@ -12,7 +12,7 @@ import {
   mockSchedule,
   getGreeting,
   getFormattedDate 
-} from './lib/mockData';
+} from '../lib/mockData';
 
 export default function Dashboard() {
   return (

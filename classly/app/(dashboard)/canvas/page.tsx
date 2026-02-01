@@ -1,7 +1,7 @@
 'use client';
 
-import Header from '../components/Header';
-import { mockUser, mockCanvasAssignments, getGreeting, getFormattedDate } from '../lib/mockData';
+import Header from '../../components/Header';
+import { mockUser, mockCanvasAssignments, getGreeting, getFormattedDate } from '../../lib/mockData';
 import { BookOpen, Calendar, Clock, ExternalLink, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function CanvasPage() {

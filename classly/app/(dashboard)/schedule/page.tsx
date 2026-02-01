@@ -1,7 +1,7 @@
 'use client';
 
-import Header from '../components/Header';
-import { mockUser, mockSchedule, getGreeting, getFormattedDate } from '../lib/mockData';
+import Header from '../../components/Header';
+import { mockUser, mockSchedule, getGreeting, getFormattedDate } from '../../lib/mockData';
 import { Plus, ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { useState } from 'react';
 

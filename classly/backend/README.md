@@ -62,6 +62,11 @@ The API will be available at `http://localhost:5000`
 - `GET /api/auth/preferences` - Get preferences
 - `PUT /api/auth/preferences` - Update preferences
 
+### Course Sync on Login
+When `POST /api/auth/login` is called, the backend resolves the user’s enrolled courses
+against the mock `all_classes` table and stores the resulting course IDs on the user
+object as `courses`.
+
 ## Architecture
 
 ```

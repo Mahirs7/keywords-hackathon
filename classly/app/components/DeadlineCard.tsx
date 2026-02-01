@@ -1,38 +1,63 @@
 'use client';
 
-import { Calendar, Clock, ChevronRight } from 'lucide-react';
-import { Deadline, platformBgColors } from '../lib/mockData';
+import { BookOpen, ClipboardCheck, MessageCircle, Code, Clock } from 'lucide-react';
+import { Deadline } from '../lib/mockData';
 
 interface DeadlineCardProps {
   deadline: Deadline;
 }
 
-export default function DeadlineCard({ deadline }: DeadlineCardProps) {
+const platformStyles: Record<Deadline['platform'], { label: string; classes: string; icon: React.ReactNode }> = {
+  canvas: {
+    label: 'Canvas',
+    classes: 'text-red-400 bg-red-500/10',
+    icon: <BookOpen className="w-4 h-4" />,
+  },
+  gradescope: {
+    label: 'Gradescope',
+    classes: 'text-green-400 bg-green-500/10',
+    icon: <ClipboardCheck className="w-4 h-4" />,
+  },
+  campuswire: {
+    label: 'Campuswire',
+    classes: 'text-blue-400 bg-blue-500/10',
+    icon: <MessageCircle className="w-4 h-4" />,
+  },
+  prairielearn: {
+    label: 'PrairieLearn',
+    classes: 'text-purple-400 bg-purple-500/10',
+    icon: <Code className="w-4 h-4" />,
+  },
+};
+
+function DeadlineCard({ deadline }: DeadlineCardProps) {
+  const platform = platformStyles[deadline.platform];
+
   return (
-    <div className="bg-[#1a1f26] rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all cursor-pointer group">
+    <div className="bg-[#1a1f26] border border-gray-800 rounded-2xl p-4 hover:border-gray-700 transition-all">
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`px-2 py-1 text-xs font-medium rounded-md capitalize ${platformBgColors[deadline.platform]}`}>
-              {deadline.platform}
-            </span>
-            <span className="text-xs text-gray-500">{deadline.type}</span>
+        <div className="flex items-start gap-3">
+          <div className={`p-2 rounded-lg ${platform.classes}`}>
+            {platform.icon}
           </div>
-          <h3 className="text-white font-medium mb-1 group-hover:text-cyan-400 transition-colors">
-            {deadline.title}
-          </h3>
-          <p className="text-sm text-gray-500">{deadline.course}</p>
-        </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1 text-gray-400 text-sm mb-1">
-            <Calendar className="w-4 h-4" />
-            <span>{deadline.dueDate}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-500 text-sm">
-            <Clock className="w-4 h-4" />
-            <span>{deadline.dueTime}</span>
+          <div>
+            <h3 className="text-white font-medium leading-snug">{deadline.title}</h3>
+            <p className="text-xs text-gray-500 mt-1">{deadline.course}</p>
           </div>
         </div>
+        <span className="text-xs text-gray-400 bg-gray-800/60 px-2 py-1 rounded">
+          {deadline.type}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Clock className="w-4 h-4" />
+          <span>
+            {deadline.dueDate} · {deadline.dueTime}
+          </span>
+        </div>
+        <span className="text-xs text-gray-400">{platform.label}</span>
       </div>
     </div>
   );
@@ -47,12 +72,11 @@ export function DeadlinesList({ deadlines }: DeadlinesListProps) {
     <div className="bg-[#0f1419] rounded-2xl border border-gray-800">
       <div className="flex items-center justify-between p-5 border-b border-gray-800">
         <h2 className="text-lg font-semibold text-white">Upcoming Deadlines</h2>
-        <button className="flex items-center gap-1 text-cyan-400 text-sm hover:text-cyan-300 transition-colors">
+        <button className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
           View all
-          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-4">
         {deadlines.map((deadline) => (
           <DeadlineCard key={deadline.id} deadline={deadline} />
         ))}
@@ -60,3 +84,5 @@ export function DeadlinesList({ deadlines }: DeadlinesListProps) {
     </div>
   );
 }
+
+export default DeadlineCard;
