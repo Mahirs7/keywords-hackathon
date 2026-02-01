@@ -7,8 +7,9 @@ import {
   Calendar, 
   BookOpen, 
   Settings,
+  ChevronLeft,
   LogOut,
-  Plus
+  Sparkles
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
 import { useClasses } from '@/app/lib/hooks/useData';
@@ -16,6 +17,7 @@ import { useClasses } from '@/app/lib/hooks/useData';
 const navItems = [
   { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
+  { href: '/assistant', label: 'Course Assistant', icon: Sparkles },
 ];
 
 export default function Sidebar() {
