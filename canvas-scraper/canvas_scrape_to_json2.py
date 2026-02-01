@@ -59,6 +59,7 @@ def long_break():
 
 def start_driver():
     opts = Options()
+    opts.binary_location = "/Applications/Google Chrome 3.app/Contents/MacOS/Google Chrome"
     opts.add_argument(f"--user-data-dir={PROFILE_DIR}")
     opts.add_argument("--start-maximized")
 

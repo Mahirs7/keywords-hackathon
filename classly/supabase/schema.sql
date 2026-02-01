@@ -239,3 +239,110 @@ BEGIN
   WHERE up.user_id = p_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================
+-- RAG COURSE Q&A TABLES (pgvector)
+-- ============================================
+
+-- Enable pgvector extension for similarity search
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- RAG Courses table (separate from user courses for global Q&A)
+CREATE TABLE IF NOT EXISTS rag_courses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Course documents (syllabus, assignments, guides, etc.)
+CREATE TABLE IF NOT EXISTS course_documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES rag_courses(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  source TEXT,  -- e.g., 'syllabus', 'assignment_list', 'office_hours', etc.
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Course chunks with embeddings for RAG
+CREATE TABLE IF NOT EXISTS course_chunks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES rag_courses(id) ON DELETE CASCADE,
+  doc_id UUID NOT NULL REFERENCES course_documents(id) ON DELETE CASCADE,
+  chunk_index INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  embedding vector(1536),  -- OpenAI ada-002 embedding dimension
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for faster vector similarity search
+CREATE INDEX IF NOT EXISTS idx_course_chunks_embedding ON course_chunks 
+  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+-- Index for filtering by course
+CREATE INDEX IF NOT EXISTS idx_course_chunks_course ON course_chunks(course_id);
+
+-- RPC function for similarity search with course filtering
+CREATE OR REPLACE FUNCTION match_course_chunks(
+  p_course_id UUID,
+  p_query_embedding vector(1536),
+  p_match_count INT DEFAULT 6,
+  p_min_similarity FLOAT DEFAULT 0.75
+)
+RETURNS TABLE (
+  chunk_id UUID,
+  doc_id UUID,
+  content TEXT,
+  metadata JSONB,
+  similarity FLOAT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    cc.id AS chunk_id,
+    cc.doc_id,
+    cc.content,
+    cc.metadata,
+    1 - (cc.embedding <=> p_query_embedding) AS similarity
+  FROM course_chunks cc
+  WHERE cc.course_id = p_course_id
+    AND 1 - (cc.embedding <=> p_query_embedding) >= p_min_similarity
+  ORDER BY cc.embedding <=> p_query_embedding
+  LIMIT p_match_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Alternative: Search across all courses (useful for general questions)
+CREATE OR REPLACE FUNCTION match_all_course_chunks(
+  p_query_embedding vector(1536),
+  p_match_count INT DEFAULT 6,
+  p_min_similarity FLOAT DEFAULT 0.75
+)
+RETURNS TABLE (
+  chunk_id UUID,
+  doc_id UUID,
+  course_id UUID,
+  course_code TEXT,
+  content TEXT,
+  metadata JSONB,
+  similarity FLOAT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    cc.id AS chunk_id,
+    cc.doc_id,
+    cc.course_id,
+    rc.code AS course_code,
+    cc.content,
+    cc.metadata,
+    1 - (cc.embedding <=> p_query_embedding) AS similarity
+  FROM course_chunks cc
+  JOIN rag_courses rc ON rc.id = cc.course_id
+  WHERE 1 - (cc.embedding <=> p_query_embedding) >= p_min_similarity
+  ORDER BY cc.embedding <=> p_query_embedding
+  LIMIT p_match_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
