@@ -13,6 +13,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from db.supabase_client import supabase
 
+try:
+    from scrapers.canvas_scraper import scrape_assignments_for_course_url as canvas_scrape_url
+except ImportError:
+    canvas_scrape_url = None
+
 
 class ScraperService:
     """Service to orchestrate scraping and data storage"""
@@ -132,7 +137,7 @@ class ScraperService:
                     'course_name': course_data['name'],
                     'type': 'assignment',
                     'due_date': due_date,
-                    'due_date_text': detail.get('due_at_text'),
+                    'due_date_text': detail.get('due_at_text') or assignment.get('due_text_raw'),
                     'status': 'pending',
                     'points_possible': detail.get('points_possible'),
                     'url': assignment.get('url'),
@@ -216,6 +221,93 @@ class ScraperService:
                 items_synced += 1
 
         return items_synced
+
+    def sync_from_user_courses(self, job_id: Optional[str] = None) -> int:
+        """
+        Get the user's classes and their LMS links from Supabase (classes + class_sources),
+        run the appropriate scraper per source (Canvas, etc.), and save assignments
+        to the tasks table. Schema: users -> classes -> class_sources -> tasks.
+        """
+        if job_id:
+            try:
+                supabase.table('scrape_jobs').update({
+                    'status': 'running',
+                    'started_at': datetime.now(timezone.utc).isoformat()
+                }).eq('id', job_id).execute()
+            except Exception:
+                pass
+
+        try:
+            # 1. Get user's classes (id, title, code)
+            classes_res = supabase.table('classes').select('id, title, code').eq('user_id', self.user_id).execute()
+            if not classes_res.data:
+                return 0
+            class_ids = [c['id'] for c in classes_res.data]
+
+            # 2. Get class_sources (id, class_id, source_type, url) for those classes
+            sources_res = supabase.table('class_sources').select('id, class_id, source_type, url').in_('class_id', class_ids).execute()
+            if not sources_res.data:
+                return 0
+
+            profile_dir = os.environ.get('CANVAS_PROFILE_DIR')
+            items_synced = 0
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            for row in sources_res.data:
+                source_type = (row.get('source_type') or '').strip().lower()
+                url = (row.get('url') or '').strip()
+                class_id = row.get('class_id')
+                source_row_id = row.get('id')
+
+                if not url or not class_id:
+                    continue
+
+                if source_type == 'canvas':
+                    if not canvas_scrape_url:
+                        continue
+                    assignments = canvas_scrape_url(course_url=url, headless=True, profile_dir=profile_dir)
+                    for a in assignments:
+                        supabase.table('tasks').insert({
+                            'class_id': class_id,
+                            'title': a['title'],
+                            'task_type': 'assignment',
+                            'due_at': None,
+                            'url': a.get('url'),
+                            'source_id': str(a['id']),
+                            'source_label': 'Canvas Assignment',
+                            'status': 'todo',
+                        }).execute()
+                        items_synced += 1
+                    try:
+                        supabase.table('class_sources').update({
+                            'last_fetched_at': now_iso,
+                            'status': 'active',
+                        }).eq('id', source_row_id).execute()
+                    except Exception:
+                        pass
+                # Add more source_type handlers (prairielearn, moodle, etc.) here
+
+            if job_id:
+                try:
+                    supabase.table('scrape_jobs').update({
+                        'status': 'completed',
+                        'completed_at': now_iso,
+                        'items_synced': items_synced
+                    }).eq('id', job_id).execute()
+                except Exception:
+                    pass
+
+            return items_synced
+        except Exception as e:
+            if job_id:
+                try:
+                    supabase.table('scrape_jobs').update({
+                        'status': 'failed',
+                        'error_message': str(e)
+                    }).eq('id', job_id).execute()
+                except Exception:
+                    pass
+            raise
 
 
 def load_scraped_data_for_user(user_id: str, platforms: Optional[List[str]] = None):

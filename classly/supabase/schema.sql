@@ -5,26 +5,23 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
--- PROFILES (extends auth.users)
+-- USERS (extends auth.users)
 -- ============================================
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT,
   email TEXT,
-  avatar_url TEXT,
-  university TEXT DEFAULT 'UIUC',
-  preferences JSONB DEFAULT '{}',
-  msft_email TEXT,  -- Microsoft/Illinois SSO email for scraping
-  msft_password TEXT,  -- Encrypted Microsoft password for scraping
+  name TEXT,
+  timezone TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  msft_email TEXT,
+  msft_password TEXT
 );
 
--- Auto-create profile on user signup
+-- Auto-create user row on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, name)
+  INSERT INTO public.users (id, email, name)
   VALUES (
     NEW.id,
     NEW.email,
@@ -44,7 +41,7 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================
 CREATE TABLE IF NOT EXISTS user_platforms (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   platform TEXT NOT NULL CHECK (platform IN ('canvas', 'gradescope', 'campuswire', 'prairielearn')),
   connected BOOLEAN DEFAULT false,
   last_synced TIMESTAMPTZ,
@@ -59,7 +56,7 @@ CREATE TABLE IF NOT EXISTS user_platforms (
 -- ============================================
 CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   platform TEXT NOT NULL,
   platform_course_id TEXT,
   name TEXT NOT NULL,
@@ -80,7 +77,7 @@ CREATE TABLE IF NOT EXISTS courses (
 -- ============================================
 CREATE TABLE IF NOT EXISTS deadlines (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   course_id UUID REFERENCES courses(id) ON DELETE SET NULL,
   platform TEXT NOT NULL,
   platform_assignment_id TEXT,
@@ -104,7 +101,7 @@ CREATE TABLE IF NOT EXISTS deadlines (
 -- ============================================
 CREATE TABLE IF NOT EXISTS schedule_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   course_id UUID REFERENCES courses(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   type TEXT DEFAULT 'class' CHECK (type IN ('class', 'study', 'break', 'office_hours', 'exam', 'other')),
@@ -121,11 +118,23 @@ CREATE TABLE IF NOT EXISTS schedule_items (
 );
 
 -- ============================================
+-- COURSE SOURCES (LMS links per course: Canvas, PrairieLearn, etc.)
+-- ============================================
+CREATE TABLE IF NOT EXISTS course_sources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL,
+  url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(course_id, source_type)
+);
+
+-- ============================================
 -- SCRAPE JOBS (track sync status)
 -- ============================================
 CREATE TABLE IF NOT EXISTS scrape_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   platform TEXT NOT NULL,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
   started_at TIMESTAMPTZ,
@@ -140,17 +149,20 @@ CREATE TABLE IF NOT EXISTS scrape_jobs (
 -- ============================================
 
 -- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_platforms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deadlines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scrape_jobs ENABLE ROW LEVEL SECURITY;
 
--- Profiles: users can only see/edit their own profile
-CREATE POLICY "Users can view own profile" ON profiles
+-- Users: users can only see/edit their own row
+CREATE POLICY "Users can view own user" ON users
   FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles
+CREATE POLICY "Users can insert own user" ON users
+  FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own user" ON users
   FOR UPDATE USING (auth.uid() = id);
 
 -- User platforms: users can only see/edit their own connections
@@ -193,6 +205,24 @@ CREATE POLICY "Users can update own schedule" ON schedule_items
 CREATE POLICY "Users can delete own schedule" ON schedule_items
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Course sources: users can only see/edit via their courses
+CREATE POLICY "Users can view own course sources" ON course_sources
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM courses c WHERE c.id = course_sources.course_id AND c.user_id = auth.uid())
+  );
+CREATE POLICY "Users can insert own course sources" ON course_sources
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM courses c WHERE c.id = course_sources.course_id AND c.user_id = auth.uid())
+  );
+CREATE POLICY "Users can update own course sources" ON course_sources
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM courses c WHERE c.id = course_sources.course_id AND c.user_id = auth.uid())
+  );
+CREATE POLICY "Users can delete own course sources" ON course_sources
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM courses c WHERE c.id = course_sources.course_id AND c.user_id = auth.uid())
+  );
+
 -- Scrape jobs: users can only see their own jobs
 CREATE POLICY "Users can view own scrape jobs" ON scrape_jobs
   FOR SELECT USING (auth.uid() = user_id);
@@ -206,6 +236,7 @@ CREATE INDEX IF NOT EXISTS idx_deadlines_user_due ON deadlines(user_id, due_date
 CREATE INDEX IF NOT EXISTS idx_deadlines_user_platform ON deadlines(user_id, platform);
 CREATE INDEX IF NOT EXISTS idx_courses_user ON courses(user_id);
 CREATE INDEX IF NOT EXISTS idx_schedule_user ON schedule_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_course_sources_course ON course_sources(course_id);
 CREATE INDEX IF NOT EXISTS idx_scrape_jobs_user ON scrape_jobs(user_id, created_at DESC);
 
 -- ============================================

@@ -1,17 +1,15 @@
 // Database types matching Supabase schema
 // These replace the mock data types
 
+/** Matches public.users table */
 export interface Profile {
   id: string;
-  name: string | null;
   email: string | null;
-  avatar_url: string | null;
-  university: string;
-  preferences: Record<string, unknown>;
+  name: string | null;
+  timezone: string | null;
+  created_at: string;
   msft_email: string | null;
   msft_password: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface UserPlatform {
@@ -22,6 +20,18 @@ export interface UserPlatform {
   last_synced: string | null;
   sync_status: 'never' | 'syncing' | 'success' | 'failed';
   error_message: string | null;
+  created_at: string;
+}
+
+/** Matches public.classes table */
+export interface Class {
+  id: string;
+  user_id: string;
+  term: string | null;
+  code: string | null;
+  title: string | null;
+  location: string | null;
+  meeting_times: string | null;
   created_at: string;
 }
 
