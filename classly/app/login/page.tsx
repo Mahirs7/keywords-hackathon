@@ -23,6 +23,13 @@ export default function LoginPage() {
     setError(null)
     setMessage(null)
 
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Supabase is not configured. Please set up your environment variables.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({

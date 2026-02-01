@@ -10,13 +10,15 @@ import {
   MessageCircle, 
   Settings,
   ChevronLeft,
-  LogOut
+  LogOut,
+  Bot
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
+  { href: '/ai', label: 'AI', icon: Bot },
 ];
 
 const platforms = [
@@ -28,10 +30,20 @@ const platforms = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
+  
+  // Try to create Supabase client, but handle gracefully if not configured
+  let supabase;
+  try {
+    supabase = createClient();
+  } catch (error) {
+    console.warn('Supabase not configured:', error);
+    supabase = null;
+  }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push('/login');
     router.refresh();
   };

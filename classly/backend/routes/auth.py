@@ -6,7 +6,13 @@ User authentication and session management
 from flask import Blueprint, jsonify, request
 import os
 
-from db.supabase_client import supabase
+# Use Supabase client from db module (from main branch)
+# Gracefully handle if Supabase not configured
+try:
+    from db.supabase_client import supabase
+except (ImportError, RuntimeError):
+    # Fallback if db module not available or Supabase not configured
+    supabase = None
 
 auth_bp = Blueprint('auth', __name__)
 
