@@ -11,74 +11,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's Microsoft credentials from profiles
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('msft_email, msft_password')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile?.msft_email || !profile?.msft_password) {
-      return NextResponse.json(
-        { error: 'Microsoft credentials not found. Please add your credentials first.' },
-        { status: 400 }
-      );
-    }
-
-    // Create scrape jobs for all platforms
-    const platforms = ['canvas', 'gradescope', 'campuswire', 'prairielearn'];
-    const jobs = [];
-
-    for (const platform of platforms) {
-      const { data, error } = await supabase
-        .from('scrape_jobs')
-        .insert({
-          user_id: user.id,
-          platform,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Failed to create job for ${platform}:`, error);
-        continue;
-      }
-      jobs.push(data);
-    }
-
-    // Trigger the backend scraper (Flask API)
+    // Trigger backend: get user's courses + course_sources from Supabase, run scrapers, save assignments
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-    
-    try {
-      const response = await fetch(`${backendUrl}/api/scrape/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          platforms: platforms,
-          job_ids: jobs.map(j => j.id),
-          credentials: {
-            email: profile.msft_email,
-            password: profile.msft_password,
-          },
-        }),
-      });
 
+    let jobId: string | null = null;
+    try {
+      const response = await fetch(`${backendUrl}/api/scrape/sync-from-courses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const data = await response.json().catch(() => ({}));
+      jobId = data.job_id ?? null;
       if (!response.ok) {
-        console.error('Backend scraper returned error:', await response.text());
+        return NextResponse.json(
+          { error: data.error || 'Failed to start sync from courses' },
+          { status: response.status }
+        );
       }
     } catch (backendError) {
-      console.error('Failed to trigger backend scraper:', backendError);
-      // Don't fail the request - jobs are created, backend will process later
+      console.error('Failed to trigger backend sync-from-courses:', backendError);
+      return NextResponse.json(
+        { error: 'Backend unavailable. Is the Flask server running?' },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Course sync initiated',
-      jobs: jobs.map(j => ({ id: j.id, platform: j.platform })),
+      message: 'Sync from your courses started',
+      job_id: jobId,
     });
 
   } catch (error: any) {

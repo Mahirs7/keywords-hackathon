@@ -8,6 +8,7 @@ import type {
   ScheduleItem, 
   PlatformSummary,
   Course,
+  Class,
   UserPlatform 
 } from '@/app/lib/database.types';
 import { platformNames, platformColors } from '@/app/lib/database.types';
@@ -32,7 +33,7 @@ export function useUser() {
         }
 
         const { data, error } = await supabase
-          .from('profiles')
+          .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single();
@@ -204,6 +205,39 @@ export function usePlatforms() {
   }, [fetchPlatforms]);
 
   return { platforms, loading, error, refetch: fetchPlatforms };
+}
+
+// ============================================
+// useClasses - Get user's classes
+// ============================================
+export function useClasses() {
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchClasses = useCallback(async () => {
+    const supabase = createClient();
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .order('title', { ascending: true });
+
+      if (error) throw error;
+      setClasses(data || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
+
+  return { classes, loading, error, refetch: fetchClasses };
 }
 
 // ============================================

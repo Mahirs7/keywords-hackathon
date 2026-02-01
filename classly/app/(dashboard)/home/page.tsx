@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import PlatformCard from '../../components/PlatformCard';
 import { DeadlinesList } from '../../components/DeadlineCard';
@@ -13,7 +14,14 @@ import { RefreshCw, Loader2, Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const [showAddClassesModal, setShowAddClassesModal] = useState(false);
-  
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('addClasses') === '1') {
+      setShowAddClassesModal(true);
+    }
+  }, [searchParams]);
+
   const { user, loading: userLoading } = useUser();
   const { deadlines, loading: deadlinesLoading, refetch: refetchDeadlines } = useDeadlines({ limit: 4, status: 'pending' });
   const { schedule, loading: scheduleLoading } = useSchedule();

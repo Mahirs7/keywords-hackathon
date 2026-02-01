@@ -29,25 +29,25 @@ export default function AddClassesModal({ isOpen, onClose, onSuccess }: AddClass
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Save Microsoft credentials to profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          msft_email: msftEmail,
-          msft_password: msftPassword, // In production, encrypt this!
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
+      // Save Microsoft credentials to profile if provided
+      if (msftEmail || msftPassword) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            ...(msftEmail && { msft_email: msftEmail }),
+            ...(msftPassword && { msft_password: msftPassword }),
+          })
+          .eq('id', user.id);
+        if (updateError) throw updateError;
+      }
 
       setStep('syncing');
 
-      // Trigger course sync
+      // Trigger sync: backend gets user's courses + course_sources from Supabase, runs scrapers, saves assignments
       const response = await fetch('/api/sync/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ msft_email: msftEmail }),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -104,7 +104,7 @@ export default function AddClassesModal({ isOpen, onClose, onSuccess }: AddClass
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
               <p className="text-sm text-blue-400">
-                Enter your Illinois Microsoft credentials to automatically import your enrolled courses from Course Explorer.
+                Sync assignments from your courses in the database. Add courses and Canvas/PrairieLearn URLs in course_sources, then run sync. Optionally save Illinois credentials for future use.
               </p>
             </div>
 
@@ -119,8 +119,7 @@ export default function AddClassesModal({ isOpen, onClose, onSuccess }: AddClass
                   type="email"
                   value={msftEmail}
                   onChange={(e) => setMsftEmail(e.target.value)}
-                  placeholder="netid@illinois.edu"
-                  required
+                  placeholder="netid@illinois.edu (optional)"
                   className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
                 />
               </div>
@@ -137,8 +136,7 @@ export default function AddClassesModal({ isOpen, onClose, onSuccess }: AddClass
                   type="password"
                   value={msftPassword}
                   onChange={(e) => setMsftPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
+                  placeholder="•••••••• (optional)"
                   className="w-full bg-[#0a0a0a] border border-gray-700 rounded-lg py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition"
                 />
               </div>
@@ -169,10 +167,10 @@ export default function AddClassesModal({ isOpen, onClose, onSuccess }: AddClass
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Connecting...
+                  Syncing...
                 </>
               ) : (
-                'Connect & Import Classes'
+                'Sync Assignments from My Courses'
               )}
             </button>
           </form>

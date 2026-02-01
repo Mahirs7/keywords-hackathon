@@ -79,6 +79,51 @@ def get_scrape_status():
     return jsonify({"jobs": result.data})
 
 
+@scrape_bp.route('/sync-from-courses', methods=['POST'])
+def sync_from_courses():
+    """
+    Get the current user's classes and their LMS links from Supabase (classes + class_sources),
+    run the appropriate scraper per source (Canvas, PrairieLearn, etc.), and save
+    assignments to the tasks table.
+    """
+    data = request.get_json() or {}
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
+
+    job_id = None
+    try:
+        job_res = supabase.table('scrape_jobs').insert({
+            'user_id': user_id,
+            'platform': 'canvas',
+            'status': 'pending',
+        }).select().single().execute()
+        job_id = job_res.data['id'] if job_res.data else None
+    except Exception:
+        pass
+
+    def run_sync():
+        scraper = ScraperService(user_id)
+        try:
+            scraper.sync_from_user_courses(job_id=job_id)
+        except Exception as e:
+            print(f"Sync from courses failed: {e}")
+            if job_id:
+                supabase.table('scrape_jobs').update({
+                    'status': 'failed',
+                    'error_message': str(e)
+                }).eq('id', job_id).execute()
+
+    thread = threading.Thread(target=run_sync)
+    thread.start()
+
+    return jsonify({
+        "message": "Sync from courses started",
+        "job_id": job_id,
+    })
+
+
 @scrape_bp.route('/cancel/<job_id>', methods=['POST'])
 def cancel_scrape(job_id):
     """Cancel a running scrape job"""
