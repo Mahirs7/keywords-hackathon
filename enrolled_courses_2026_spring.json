@@ -1,0 +1,59 @@
+{
+  "term": "Spring 2026",
+  "courses": [
+    {
+      "course": "CS 444",
+      "crn": "73329",
+      "type": "Lecture-Discussion",
+      "section": "CVU",
+      "time": "11:00AM - 12:15PM",
+      "days": "TR",
+      "location": "2079 Natural History Building",
+      "instructor": "Lazebnik, S",
+      "url": "https://courses.illinois.edu/schedule/2026/spring/CS/444",
+      "department": "CS",
+      "number": "444"
+    },
+    {
+      "course": "CS 447",
+      "crn": "74372",
+      "type": "Online",
+      "section": "NLU",
+      "time": "ARRANGED",
+      "days": "n.a",
+      "location": "n.a",
+      "instructor": "Peng, H",
+      "url": "https://courses.illinois.edu/schedule/2026/spring/CS/447",
+      "department": "CS",
+      "number": "447"
+    },
+    {
+      "course": "MATH 412",
+      "crn": "37937",
+      "type": "Lecture-Discussion",
+      "section": "A13",
+      "time": "02:00PM - 02:50PM",
+      "days": "MWF",
+      "location": "165 Noyes Laboratory",
+      "instructor": "Dhawan, A",
+      "url": "https://courses.illinois.edu/schedule/2026/spring/MATH/412",
+      "department": "MATH",
+      "number": "412"
+    },
+    {
+      "course": "MATH 441",
+      "crn": "61553",
+      "type": "Lecture-Discussion",
+      "section": "B13",
+      "time": "10:00AM - 10:50AM",
+      "days": "MWF",
+      "location": "1060 Wymer Hall",
+      "instructor": "Tzirakis, N",
+      "url": "https://courses.illinois.edu/schedule/2026/spring/MATH/441",
+      "department": "MATH",
+      "number": "441"
+    }
+  ],
+  "count": 4,
+  "scraped_at": "2026-01-31T21:22:48.301039"
+}

@@ -10,13 +10,15 @@ import {
   MessageCircle, 
   Settings,
   ChevronLeft,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
 
 const navItems = [
   { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
+  { href: '/assistant', label: 'Course Assistant', icon: Sparkles },
 ];
 
 const platforms = [
