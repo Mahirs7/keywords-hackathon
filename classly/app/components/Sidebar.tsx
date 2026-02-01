@@ -15,7 +15,7 @@ import {
 import { createClient } from '@/app/lib/supabase/client';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
 ];
 
@@ -45,7 +45,7 @@ export default function Sidebar() {
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span className="text-xl font-bold text-white">StudyHub</span>
+        <span className="text-xl font-bold text-white">Classly</span>
       </div>
 
       {/* Navigation */}
