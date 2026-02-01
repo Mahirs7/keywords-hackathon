@@ -77,6 +77,77 @@ def login_to_prairielearn(driver, email, password):
         print("   Please complete login manually in the browser...")
         input("   Press Enter once you've logged in...")
 
+def scrape_courses(driver):
+    """
+    Scrape all courses from PrairieLearn homepage
+    Returns list of course info with course_instance_ids
+    """
+    print("\n📚 Scraping courses from homepage...")
+    
+    # Navigate to homepage
+    driver.get("https://us.prairielearn.com/pl")
+    time.sleep(3)
+    
+    courses = []
+    
+    try:
+        # Find the Courses table
+        table = WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "table[aria-label='Courses']"))
+        )
+        print("✅ Found Courses table!")
+        
+        # Find all rows in tbody
+        rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
+        print(f"📊 Found {len(rows)} course rows")
+        
+        for i, row in enumerate(rows, 1):
+            try:
+                course_data = {
+                    'row_number': i,
+                    'raw_text': row.text.strip(),
+                    'course_instance_id': None,
+                    'course_name': None,
+                    'links': []
+                }
+                
+                # Find all links in the row
+                links = row.find_elements(By.TAG_NAME, "a")
+                for link in links:
+                    href = link.get_attribute('href')
+                    text = link.text.strip()
+                    course_data['links'].append({
+                        'text': text,
+                        'href': href
+                    })
+                    
+                    # Extract course_instance_id from URL
+                    # URL format: /pl/course_instance/206336/...
+                    if href and '/course_instance/' in href:
+                        parts = href.split('/course_instance/')
+                        if len(parts) > 1:
+                            cid = parts[1].split('/')[0]
+                            course_data['course_instance_id'] = cid
+                            if not course_data['course_name']:
+                                course_data['course_name'] = text
+                
+                if course_data['course_instance_id']:
+                    courses.append(course_data)
+                    print(f"   Course {i}: {course_data['course_name']} (ID: {course_data['course_instance_id']})")
+                else:
+                    print(f"   Row {i}: No course ID found - {course_data['raw_text'][:50]}...")
+                    
+            except Exception as e:
+                print(f"   ⚠️  Error extracting row {i}: {e}")
+        
+        print(f"\n✅ Found {len(courses)} courses with valid IDs")
+        return courses
+        
+    except Exception as e:
+        print(f"❌ Error finding courses table: {e}")
+        print("   Current URL:", driver.current_url)
+        return []
+
 def scrape_assessments(driver, course_instance_id):
     """
     Scrape assessments from PrairieLearn course instance

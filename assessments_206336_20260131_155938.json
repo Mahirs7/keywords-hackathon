@@ -1,0 +1,152 @@
+{
+  "headers": [
+    "Label",
+    "Title",
+    "Available credit",
+    "Score"
+  ],
+  "assessments": [
+    {
+      "row_number": 1,
+      "cells": [],
+      "raw_text": "\n                          \n                            Week 2\n                          \n                        ",
+      "links": []
+    },
+    {
+      "row_number": 2,
+      "cells": [
+        {
+          "index": 0,
+          "text": "A2",
+          "html": "\n                      <span class=\"badge color-orange1\" data-testid=\"assessment-set-badge\">\n                        A2\n                      </span>\n                    "
+        },
+        {
+          "index": 1,
+          "text": "ADT Activity",
+          "html": "\n                      \n                            <a href=\"/pl/course_instance/206336/assessment/2640062/\">\n                              ADT Activity\n                              \n                "
+        },
+        {
+          "index": 2,
+          "text": "100% until 23:59, Tue, Feb 3",
+          "html": "\n                      100% until 23:59, Tue, Feb 3\n                      \n    <button type=\"button\" class=\"btn btn-xs btn-ghost\" data-bs-toggle=\"popover\" data-bs-container=\"body\" data-bs-html=\"true\" "
+        },
+        {
+          "index": 3,
+          "text": "Not started",
+          "html": "\n                      Not started\n                    "
+        }
+      ],
+      "raw_text": "\n                    \n                      \n                        A2\n                      \n                    \n                    \n                      \n                            \n                              ADT Activity\n                              \n                            \n                          \n                    \n                    \n                      100% until 23:59, Tue, Feb 3\n                      \n    \n      \n    \n  \n                    \n                    \n                      Not started\n                    \n                  ",
+      "links": [
+        {
+          "text": "ADT Activity",
+          "href": "https://us.prairielearn.com/pl/course_instance/206336/assessment/2640062/"
+        }
+      ]
+    },
+    {
+      "row_number": 3,
+      "cells": [
+        {
+          "index": 0,
+          "text": "POGIL2",
+          "html": "\n                      <span class=\"badge color-gray1\" data-testid=\"assessment-set-badge\">\n                        POGIL2\n                      </span>\n                    "
+        },
+        {
+          "index": 1,
+          "text": "Algebraic Data Types in-class activity",
+          "html": "\n                      \n                            <a href=\"/pl/course_instance/206336/assessment/2640063/\">\n                              Algebraic Data Types in-class activity\n                     "
+        },
+        {
+          "index": 2,
+          "text": "100% until 23:59, Tue, Feb 3",
+          "html": "\n                      100% until 23:59, Tue, Feb 3\n                      \n    <button type=\"button\" class=\"btn btn-xs btn-ghost\" data-bs-toggle=\"popover\" data-bs-container=\"body\" data-bs-html=\"true\" "
+        },
+        {
+          "index": 3,
+          "text": "Not started",
+          "html": "\n                      Not started\n                    "
+        }
+      ],
+      "raw_text": "\n                    \n                      \n                        POGIL2\n                      \n                    \n                    \n                      \n                            \n                              Algebraic Data Types in-class activity\n                              \n                            \n                          \n                    \n                    \n                      100% until 23:59, Tue, Feb 3\n                      \n    \n      \n    \n  \n                    \n                    \n                      Not started\n                    \n                  ",
+      "links": [
+        {
+          "text": "Algebraic Data Types in-class activity",
+          "href": "https://us.prairielearn.com/pl/course_instance/206336/assessment/2640063/"
+        }
+      ]
+    },
+    {
+      "row_number": 4,
+      "cells": [],
+      "raw_text": "\n                          \n                            Week 1\n                          \n                        ",
+      "links": []
+    },
+    {
+      "row_number": 5,
+      "cells": [
+        {
+          "index": 0,
+          "text": "A1",
+          "html": "\n                      <span class=\"badge color-orange1\" data-testid=\"assessment-set-badge\">\n                        A1\n                      </span>\n                    "
+        },
+        {
+          "index": 1,
+          "text": "Recursion Activity",
+          "html": "\n                      \n                            <a href=\"/pl/course_instance/206336/assessment_instance/12660991/\">\n                              Recursion Activity\n                              \n"
+        },
+        {
+          "index": 2,
+          "text": "100% until 23:59, Tue, Feb 3",
+          "html": "\n                      100% until 23:59, Tue, Feb 3\n                      \n    <button type=\"button\" class=\"btn btn-xs btn-ghost\" data-bs-toggle=\"popover\" data-bs-container=\"body\" data-bs-html=\"true\" "
+        },
+        {
+          "index": 3,
+          "text": "0%",
+          "html": "\n                      <div class=\"progress border border-success mx-auto\" style=\"min-width:5em;max-width:20em\"><div class=\"progress-bar bg-success\" style=\"width:0%\"></div><div class=\"d-flex flex-colu"
+        }
+      ],
+      "raw_text": "\n                    \n                      \n                        A1\n                      \n                    \n                    \n                      \n                            \n                              Recursion Activity\n                              \n                            \n                          \n                    \n                    \n                      100% until 23:59, Tue, Feb 3\n                      \n    \n      \n    \n  \n                    \n                    \n                      0%\n                    \n                  ",
+      "links": [
+        {
+          "text": "Recursion Activity",
+          "href": "https://us.prairielearn.com/pl/course_instance/206336/assessment_instance/12660991/"
+        }
+      ]
+    },
+    {
+      "row_number": 6,
+      "cells": [
+        {
+          "index": 0,
+          "text": "POGIL1",
+          "html": "\n                      <span class=\"badge color-gray1\" data-testid=\"assessment-set-badge\">\n                        POGIL1\n                      </span>\n                    "
+        },
+        {
+          "index": 1,
+          "text": "Recursion in-class activity",
+          "html": "\n                      \n                            <a href=\"/pl/course_instance/206336/assessment/2634584/\">\n                              Recursion in-class activity\n                              <i"
+        },
+        {
+          "index": 2,
+          "text": "100% until 23:59, Tue, Feb 3",
+          "html": "\n                      100% until 23:59, Tue, Feb 3\n                      \n    <button type=\"button\" class=\"btn btn-xs btn-ghost\" data-bs-toggle=\"popover\" data-bs-container=\"body\" data-bs-html=\"true\" "
+        },
+        {
+          "index": 3,
+          "text": "Not started",
+          "html": "\n                      Not started\n                    "
+        }
+      ],
+      "raw_text": "\n                    \n                      \n                        POGIL1\n                      \n                    \n                    \n                      \n                            \n                              Recursion in-class activity\n                              \n                            \n                          \n                    \n                    \n                      100% until 23:59, Tue, Feb 3\n                      \n    \n      \n    \n  \n                    \n                    \n                      Not started\n                    \n                  ",
+      "links": [
+        {
+          "text": "Recursion in-class activity",
+          "href": "https://us.prairielearn.com/pl/course_instance/206336/assessment/2634584/"
+        }
+      ]
+    }
+  ],
+  "scraped_at": "2026-01-31T15:59:38.565079",
+  "course_instance_id": "206336"
+}
