@@ -20,7 +20,7 @@ def auth_required(f):
         except Exception:
             return jsonify({
                 "success": False,
-                "error": "Invalid or expired token"
+                "error": "Invalid or expired token!"
             }), 401
 
         request.user = user
