@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronLeft,
   LogOut,
+  Bot
   Sparkles
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
@@ -17,17 +18,33 @@ import { useClasses } from '@/app/lib/hooks/useData';
 const navItems = [
   { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
+  { href: '/ai', label: 'AI', icon: Bot },
+];
+
+const platforms = [
+  { href: '/canvas', label: 'Canvas', icon: BookOpen, count: 4, color: 'bg-red-500' },
+  { href: '/gradescope', label: 'Gradescope', icon: ClipboardCheck, count: 2, color: 'bg-green-500' },
+  { href: '/campuswire', label: 'Campuswire', icon: MessageCircle, count: 8, color: 'bg-blue-500' },
   { href: '/assistant', label: 'Course Assistant', icon: Sparkles },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
-  const { classes, loading: classesLoading } = useClasses();
+  
+  // Try to create Supabase client, but handle gracefully if not configured
+  let supabase;
+  try {
+    supabase = createClient();
+  } catch (error) {
+    console.warn('Supabase not configured:', error);
+    supabase = null;
+  }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push('/login');
     router.refresh();
   };
