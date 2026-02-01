@@ -7,7 +7,7 @@ interface DeadlineDisplay {
   id: string;
   title: string;
   course: string;
-  platform: 'canvas' | 'gradescope' | 'campuswire' | 'prairielearn';
+  platform: string;
   type: string;
   dueDate: string;
   dueTime: string;
@@ -42,7 +42,9 @@ const platformStyles: Record<DeadlineDisplay['platform'], { label: string; class
 };
 
 function DeadlineCard({ deadline }: DeadlineCardProps) {
-  const platform = platformStyles[deadline.platform];
+  // Normalize platform to lowercase for lookup
+  const platformKey = deadline.platform?.toLowerCase() as DeadlineDisplay['platform'];
+  const platform = platformStyles[platformKey] || platformStyles.canvas; // fallback to canvas
 
   return (
     <div className="bg-[#1a1f26] border border-gray-800 rounded-2xl p-4 hover:border-gray-700 transition-all">

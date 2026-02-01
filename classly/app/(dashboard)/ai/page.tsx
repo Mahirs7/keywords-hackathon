@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Loader2, Calendar, CheckCircle, XCircle } from 'lucide-react';
-import Header from '../components/Header';
-import { mockUser, getGreeting, getFormattedDate } from '../lib/mockData';
-import { createClient } from '../lib/supabase/client';
+import { Bot, Send, Loader2, Calendar, CheckCircle } from 'lucide-react';
+import Header from '../../components/Header';
+import { getGreeting, getFormattedDate } from '../../lib/mockData';
+import { useUser } from '../../lib/hooks/useData';
+import { createClient } from '../../lib/supabase/client';
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ interface Message {
 }
 
 export default function AIPage() {
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -38,7 +40,6 @@ export default function AIPage() {
   }, [messages]);
 
   useEffect(() => {
-    // Get user session and token
     const getSession = async () => {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -50,16 +51,13 @@ export default function AIPage() {
   }, []);
 
   useEffect(() => {
-    // Check calendar connection status on mount (after token is available)
     if (userToken) {
       checkCalendarStatus();
     }
     
-    // Check URL params for OAuth callback
     const params = new URLSearchParams(window.location.search);
     if (params.get('calendar_connected') === 'true') {
       setCalendarConnected(true);
-      // Clean URL
       window.history.replaceState({}, '', '/ai');
     } else if (params.get('calendar_error')) {
       const error = params.get('calendar_error');
@@ -75,17 +73,12 @@ export default function AIPage() {
 
   const checkCalendarStatus = async () => {
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
       }
       
-      const response = await fetch('http://localhost:5000/api/calendar/oauth/status', {
-        headers,
-      });
+      const response = await fetch('http://localhost:5000/api/calendar/oauth/status', { headers });
       const data = await response.json();
       setCalendarConnected(data.connected || false);
     } catch (error) {
@@ -107,7 +100,6 @@ export default function AIPage() {
     }
     
     try {
-      // Get OAuth URL from backend with Authorization header
       const response = await fetch('http://localhost:5000/api/calendar/oauth/authorize', {
         method: 'POST',
         headers: {
@@ -123,7 +115,6 @@ export default function AIPage() {
       
       const data = await response.json();
       if (data.success && data.auth_url) {
-        // Redirect to Google OAuth consent screen
         window.location.href = data.auth_url;
       } else {
         throw new Error('Invalid response from server');
@@ -140,10 +131,7 @@ export default function AIPage() {
 
   const handleDisconnectCalendar = async () => {
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
       }
@@ -182,10 +170,7 @@ export default function AIPage() {
     setIsLoading(true);
 
     try {
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (userToken) {
         headers['Authorization'] = `Bearer ${userToken}`;
       }
@@ -227,50 +212,52 @@ export default function AIPage() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const userName = user?.name || 'Student';
+
   return (
     <div className="max-w-7xl mx-auto">
       <Header 
         greeting={getGreeting()} 
-        userName={mockUser.name} 
+        userName={userName} 
         date={getFormattedDate()} 
       />
 
-      <div className="bg-[#0f1419] rounded-2xl border border-gray-800 flex flex-col h-[calc(100vh-12rem)]">
+      <div className="bg-[#0f1419] rounded-2xl border border-gray-800 flex flex-col h-[calc(100vh-180px)]">
         {/* Chat Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+              <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">AI Study Assistant</h2>
+              <h2 className="text-xl font-semibold text-white">AI Study Assistant</h2>
               <p className="text-sm text-gray-400">Powered by Keywords AI</p>
             </div>
           </div>
           
           {/* Calendar Connection Status */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {checkingCalendar ? (
               <div className="flex items-center gap-2 text-gray-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">Checking...</span>
               </div>
             ) : calendarConnected ? (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/30 rounded-xl">
                   <CheckCircle className="w-4 h-4 text-green-400" />
                   <span className="text-sm text-green-400">Calendar Connected</span>
                 </div>
                 <button
                   onClick={handleDisconnectCalendar}
-                  className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   Disconnect
                 </button>
@@ -278,7 +265,7 @@ export default function AIPage() {
             ) : (
               <button
                 onClick={handleConnectCalendar}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 hover:bg-blue-500/20 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400 hover:bg-cyan-500/20 transition-colors"
               >
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm font-medium">Connect Calendar</span>
@@ -288,28 +275,26 @@ export default function AIPage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex gap-3 ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0">
+                  <Bot className="w-5 h-5 text-white" />
                 </div>
               )}
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[70%] rounded-2xl px-5 py-3 ${
                   message.role === 'user'
-                    ? 'bg-cyan-500 text-white'
-                    : 'bg-[#1a1f26] text-gray-100 border border-gray-700'
+                    ? 'bg-cyan-500 text-white rounded-br-md'
+                    : 'bg-[#1a1f26] text-gray-100 border border-gray-700 rounded-bl-md'
                 }`}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-                <p className="text-xs mt-1 opacity-70">
+                <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                <p className="text-xs mt-2 opacity-60">
                   {message.timestamp.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -317,20 +302,20 @@ export default function AIPage() {
                 </p>
               </div>
               {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm text-gray-300">
-                    {mockUser.name.charAt(0).toUpperCase()}
+                <div className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-medium text-white">
+                    {userName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
             </div>
           ))}
           {isLoading && (
-            <div className="flex gap-3 justify-start">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-white" />
+            <div className="flex gap-4 justify-start">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0">
+                <Bot className="w-5 h-5 text-white" />
               </div>
-              <div className="bg-[#1a1f26] border border-gray-700 rounded-2xl px-4 py-3">
+              <div className="bg-[#1a1f26] border border-gray-700 rounded-2xl rounded-bl-md px-5 py-3">
                 <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
               </div>
             </div>
@@ -340,20 +325,20 @@ export default function AIPage() {
 
         {/* Input */}
         <div className="p-5 border-t border-gray-800">
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
+          <div className="flex items-end gap-3">
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Ask me anything... (e.g., 'Check for pending assignments this week and create a calendar entry')"
-              className="flex-1 bg-[#1a1f26] border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              className="flex-1 bg-[#1a1f26] border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors resize-none min-h-[48px] max-h-[120px]"
               disabled={isLoading}
+              rows={1}
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="p-3 bg-cyan-500 rounded-xl text-white hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="p-3 bg-cyan-500 rounded-xl text-white hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -362,7 +347,7 @@ export default function AIPage() {
               )}
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2 px-1">
+          <p className="text-xs text-gray-500 mt-2">
             Press Enter to send, Shift+Enter for new line
           </p>
         </div>
@@ -370,4 +355,3 @@ export default function AIPage() {
     </div>
   );
 }
-

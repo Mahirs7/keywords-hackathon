@@ -5,29 +5,22 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Calendar, 
-  BookOpen, 
-  Settings,
-  ChevronLeft,
+  BookOpen,
   LogOut,
   Bot,
   Sparkles,
-  ClipboardCheck,
-  MessageCircle
+  ListTodo,
+  Plus
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
 import { useClasses } from '@/app/lib/hooks/useData';
 
 const navItems = [
   { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/tasks', label: 'Tasks', icon: ListTodo },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
   { href: '/ai', label: 'AI', icon: Bot },
-];
-
-const platforms = [
-  { href: '/canvas', label: 'Canvas', icon: BookOpen, count: 4, color: 'bg-red-500' },
-  { href: '/gradescope', label: 'Gradescope', icon: ClipboardCheck, count: 2, color: 'bg-green-500' },
-  { href: '/campuswire', label: 'Campuswire', icon: MessageCircle, count: 8, color: 'bg-blue-500' },
-  { href: '/assistant', label: 'Course Assistant', icon: Sparkles },
+  { href: '/assistant', label: 'Assistant', icon: Sparkles },
 ];
 
 export default function Sidebar() {
@@ -123,19 +116,8 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Settings & Logout */}
+      {/* Logout */}
       <div className="px-4 py-4 border-t border-gray-800 space-y-2">
-        <Link
-          href="/settings"
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-            pathname === '/settings'
-              ? 'bg-cyan-500/10 text-cyan-400'
-              : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
-          }`}
-        >
-          <Settings className="w-5 h-5" />
-          <span className="font-medium">Settings</span>
-        </Link>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-red-500/10 hover:text-red-400"

@@ -311,6 +311,90 @@ If the data doesn't contain what they're asking about, let them know what inform
         }), 500
 
 
+@rag_bp.route('/chat', methods=['POST'])
+def chat():
+    """
+    Chat endpoint for the Study Buddy chatbot.
+
+    Request body (JSON):
+      - message (str, required): The user's message or question.
+      - course_context (str, optional): A short description of the relevant course
+        or classes to help tailor the response (e.g. course name, code, topic).
+
+    Behavior:
+      - If `message` is empty or missing, the endpoint returns a JSON object with
+        a simple prompt asking the user to send a message.
+      - If `OPENAI_API_KEY` is configured, the endpoint may call the OpenAI Chat
+        Completions API using an internal system prompt that describes the "Study
+        Buddy" assistant and the provided course context.
+      - If `OPENAI_API_KEY` is not configured, the endpoint falls back to a simple
+        non-LLM response and does not make any external OpenAI API calls.
+
+    Response:
+      - Returns a JSON object with at least:
+          * response (str): The chatbot's reply to the user.
+        Additional metadata fields may be included to describe how the response
+        was generated.
+    """
+    try:
+        data = request.json or {}
+        message = data.get('message', '')
+        course_context = data.get('course_context', '')
+        
+        if not message:
+            return jsonify({'response': 'Please send a message!'})
+        
+        # Build system prompt
+        system_prompt = f"""You are a helpful study assistant called "Study Buddy" for a college student.
+You're helping them with their course: {course_context if course_context else 'their classes'}.
+Be friendly, encouraging, and concise. Use emojis occasionally.
+If asked about due dates, remind them to check their assignments page for the latest info.
+Keep responses under 150 words unless they ask for detailed explanations."""
+
+        if OPENAI_API_KEY:
+            try:
+                import requests as http_requests
+                response = http_requests.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {OPENAI_API_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "gpt-4o-mini",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": message}
+                        ],
+                        "max_tokens": 300,
+                        "temperature": 0.7
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    answer = response.json()['choices'][0]['message']['content']
+                    return jsonify({'response': answer})
+                else:
+                    return jsonify({'response': f"I'm having trouble thinking right now. Try again in a moment! 🤔"})
+            except Exception as e:
+                print(f"Chat error: {e}")
+                return jsonify({'response': "Oops! Something went wrong. Let me try again... 🔄"})
+        else:
+            # Mock response when no API key
+            responses = [
+                f"Great question about {course_context}! 📚 I'd love to help, but my AI brain needs an API key to give you detailed answers.",
+                f"I'm your study buddy for {course_context}! For now, check your assignments page for due dates.",
+                "Let's study together! 🎯 What topic should we focus on?",
+            ]
+            import random
+            return jsonify({'response': random.choice(responses)})
+            
+    except Exception as e:
+        print(f"Chat endpoint error: {e}")
+        return jsonify({'response': "Sorry, I encountered an error. Please try again!"})
+
+
 @rag_bp.route('/health', methods=['GET'])
 def health_check():
     """Check RAG service health and configuration."""

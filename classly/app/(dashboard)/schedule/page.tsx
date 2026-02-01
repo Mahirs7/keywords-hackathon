@@ -1,9 +1,9 @@
 'use client';
 
 import Header from '../../components/Header';
-import { useUser, useSchedule, useCourses } from '../../lib/hooks/useData';
+import { useUser, useSchedule, useCourses, useTasks } from '../../lib/hooks/useData';
 import { getGreeting, getFormattedDate } from '../../lib/mockData';
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, Loader2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, Loader2, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -13,13 +13,27 @@ export default function SchedulePage() {
   const { user, loading: userLoading } = useUser();
   const { schedule, loading: scheduleLoading } = useSchedule();
   const { courses, loading: coursesLoading } = useCourses();
+  const { tasks, loading: tasksLoading } = useTasks();
   const [currentWeek, setCurrentWeek] = useState('Jan 27 - Feb 2, 2026');
 
-  const isLoading = userLoading || scheduleLoading || coursesLoading;
+  const isLoading = userLoading || scheduleLoading || coursesLoading || tasksLoading;
 
   // Get today's day index (0 = Monday, 6 = Sunday)
   const today = new Date();
   const todayIndex = (today.getDay() + 6) % 7;
+
+  // Get tasks for a specific day
+  const getTasksForDay = (dayIndex: number) => {
+    const weekStart = new Date(2026, 0, 27); // Jan 27, 2026
+    const targetDate = new Date(weekStart);
+    targetDate.setDate(weekStart.getDate() + dayIndex);
+    
+    return tasks.filter(task => {
+      if (!task.due_at) return false;
+      const dueDate = new Date(task.due_at);
+      return dueDate.toDateString() === targetDate.toDateString();
+    });
+  };
 
   // Transform schedule items for the calendar
   const getEventsForSlot = (dayIndex: number, timeSlot: string) => {
@@ -134,36 +148,39 @@ export default function SchedulePage() {
 
       {/* Courses & Quick Add */}
       <div className="mt-6 grid grid-cols-3 gap-6">
+        {/* Tasks Due This Week */}
         <div className="col-span-2 bg-[#0f1419] rounded-2xl border border-gray-800 p-5">
-          <h3 className="text-lg font-semibold text-white mb-4">Your Courses</h3>
-          <div className="space-y-3">
-            {courses.length > 0 ? (
-              courses.map((course) => (
-                <div key={course.id} className="flex items-center gap-4 p-4 bg-[#1a1f26] rounded-xl border border-gray-800">
-                  <div className={`w-2 h-12 rounded-full ${course.color || 'bg-blue-500'}`}></div>
-                  <div className="flex-1">
-                    <p className="text-white font-medium">{course.code} - {course.name}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      {course.schedule && (
-                        <span className="flex items-center gap-1 text-sm text-gray-400">
-                          <Clock className="w-4 h-4" />
-                          {course.schedule}
-                        </span>
-                      )}
-                      {course.location && (
-                        <span className="flex items-center gap-1 text-sm text-gray-400">
-                          <MapPin className="w-4 h-4" />
-                          {course.location}
-                        </span>
-                      )}
-                    </div>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-cyan-400" />
+            Tasks Due This Week
+          </h3>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            {tasks.filter(t => t.due_at).slice(0, 10).map((task) => (
+              <div key={task.id} className="flex items-center gap-4 p-3 bg-[#1a1f26] rounded-xl border border-gray-800">
+                <div className={`w-2 h-10 rounded-full ${
+                  task.status === 'completed' ? 'bg-green-500' : 
+                  task.task_type === 'exam' ? 'bg-red-500' :
+                  task.task_type === 'quiz' ? 'bg-purple-500' :
+                  'bg-cyan-500'
+                }`}></div>
+                <div className="flex-1">
+                  <p className="text-white font-medium text-sm">{task.title}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-gray-400">{task.classes?.code}</span>
+                    <span className="text-xs text-cyan-400">
+                      {task.due_at ? new Date(task.due_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : ''}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">{task.task_type}</span>
                   </div>
                 </div>
-              ))
-            ) : (
+                {task.status === 'completed' && (
+                  <span className="text-xs text-green-400">✓ Done</span>
+                )}
+              </div>
+            ))}
+            {tasks.filter(t => t.due_at).length === 0 && (
               <div className="text-center py-8 text-gray-400">
-                <p>No courses added yet.</p>
-                <p className="text-sm mt-1">Add classes to see them here.</p>
+                <p>No tasks this week.</p>
               </div>
             )}
           </div>

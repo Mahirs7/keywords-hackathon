@@ -352,3 +352,146 @@ export async function triggerSync(platform?: string) {
 
   return response.json();
 }
+
+// ============================================
+// Task types
+// ============================================
+export interface Task {
+  id: string;
+  class_id: string;
+  title: string;
+  task_type: string;
+  due_at: string | null;
+  url: string | null;
+  source_id: string | null;
+  source_label: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  classes?: { code: string; title: string };
+}
+
+// ============================================
+// useTasks - Get user's tasks from all classes
+// ============================================
+export function useTasks(options?: {
+  classId?: string;
+  userId?: string;
+  status?: string;
+}) {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTasks = useCallback(async () => {
+    const supabase = createClient();
+    setLoading(true);
+
+    try {
+      if (options?.classId) {
+        // Fetch tasks for specific class
+        let query = supabase
+          .from('tasks')
+          .select('*, classes(code, title)')
+          .eq('class_id', options.classId)
+          .order('due_at', { ascending: true, nullsFirst: false });
+
+        if (options?.status) {
+          query = query.eq('status', options.status);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        setTasks(data || []);
+      } else if (options?.userId) {
+        // Fetch tasks for all user's classes
+        const { data: userClasses } = await supabase
+          .from('classes')
+          .select('id')
+          .eq('user_id', options.userId);
+
+        if (userClasses && userClasses.length > 0) {
+          const classIds = userClasses.map(c => c.id);
+          let query = supabase
+            .from('tasks')
+            .select('*, classes(code, title)')
+            .in('class_id', classIds)
+            .order('due_at', { ascending: true, nullsFirst: false });
+
+          if (options?.status) {
+            query = query.eq('status', options.status);
+          }
+
+          const { data, error } = await query;
+          if (error) throw error;
+          setTasks(data || []);
+        } else {
+          setTasks([]);
+        }
+      } else {
+        // Fetch all tasks
+        let query = supabase
+          .from('tasks')
+          .select('*, classes(code, title)')
+          .order('due_at', { ascending: true, nullsFirst: false });
+
+        if (options?.status) {
+          query = query.eq('status', options.status);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        setTasks(data || []);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [options?.classId, options?.userId, options?.status]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  return { tasks, loading, error, refetch: fetchTasks };
+}
+
+// ============================================
+// syncTasks - Trigger task sync from backend
+// ============================================
+export async function syncTasks(userId: string, classId?: string) {
+  const response = await fetch('http://localhost:5000/api/tasks/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      user_id: userId,
+      class_id: classId,
+      async: false  // Run synchronously so we can show results
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Task sync failed');
+  }
+
+  return response.json();
+}
+
+// ============================================
+// updateTask - Update a task's status
+// ============================================
+export async function updateTask(taskId: string, updates: Partial<Task>) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase
+    .from('tasks')
+    .update(updates)
+    .eq('id', taskId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}

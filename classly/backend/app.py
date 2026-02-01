@@ -34,6 +34,7 @@ from routes.platforms import platforms_bp
 from routes.auth import auth_bp
 from routes.scrape import scrape_bp
 from routes.rag import rag_bp
+from routes.tasks import tasks_bp
 
 # Register blueprints
 app.register_blueprint(deadlines_bp, url_prefix='/api/deadlines')
@@ -44,6 +45,7 @@ app.register_blueprint(ai_bp, url_prefix='/api/ai')
 app.register_blueprint(calendar_oauth_bp, url_prefix='/api/calendar')
 app.register_blueprint(scrape_bp, url_prefix='/api/scrape')
 app.register_blueprint(rag_bp, url_prefix='/api/rag')
+app.register_blueprint(tasks_bp, url_prefix='/api/tasks')
 
 
 @app.route('/')
@@ -59,7 +61,8 @@ def index():
             "auth": "/api/auth",
             "ai": "/api/ai",
             "calendar_oauth": "/api/calendar/oauth",
-            "rag": "/api/rag"
+            "rag": "/api/rag",
+            "tasks": "/api/tasks"
         }
     })
 
