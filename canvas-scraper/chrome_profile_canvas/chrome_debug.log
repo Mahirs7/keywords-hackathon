@@ -1,0 +1,2 @@
+[93409:7041831:0131/231648.568414:ERROR:chrome/browser/chrome_browser_main.cc:1243] The use of Rosetta to run the x64 version of Chromium on Arm is neither tested nor maintained, and unexpected behavior will likely result. Please check that all tools that spawn Chromium are Arm-native.
+[93409:7041831:0131/231651.653747:INFO:components/enterprise/browser/controller/chrome_browser_cloud_management_controller.cc:206] No machine level policy manager exists.

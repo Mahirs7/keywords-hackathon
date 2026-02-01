@@ -49,6 +49,15 @@ export default function LoginPage() {
         })
         
         if (error) throw error
+        
+        // Trigger initial data sync in background
+        try {
+          await fetch('/api/sync', { method: 'POST' })
+        } catch (syncError) {
+          console.error('Initial sync failed:', syncError)
+          // Don't block login if sync fails
+        }
+        
         router.push('/')
         router.refresh()
       }

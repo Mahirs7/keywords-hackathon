@@ -6,17 +6,17 @@ import {
   LayoutDashboard, 
   Calendar, 
   BookOpen, 
-  ClipboardCheck, 
-  MessageCircle, 
   Settings,
   ChevronLeft,
   LogOut,
   Bot
+  Sparkles
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
+import { useClasses } from '@/app/lib/hooks/useData';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
   { href: '/ai', label: 'AI', icon: Bot },
 ];
@@ -25,6 +25,7 @@ const platforms = [
   { href: '/canvas', label: 'Canvas', icon: BookOpen, count: 4, color: 'bg-red-500' },
   { href: '/gradescope', label: 'Gradescope', icon: ClipboardCheck, count: 2, color: 'bg-green-500' },
   { href: '/campuswire', label: 'Campuswire', icon: MessageCircle, count: 8, color: 'bg-blue-500' },
+  { href: '/assistant', label: 'Course Assistant', icon: Sparkles },
 ];
 
 export default function Sidebar() {
@@ -61,7 +62,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -81,34 +82,41 @@ export default function Sidebar() {
           );
         })}
 
-        {/* Platforms section */}
+        {/* Classes section */}
         <div className="pt-6">
           <p className="px-4 mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Platforms
+            Classes
           </p>
-          {platforms.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-cyan-500/10 text-cyan-400'
-                    : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${item.color} text-white`}>
-                  {item.count}
-                </span>
-              </Link>
-            );
-          })}
+          {classesLoading ? (
+            <div className="px-4 py-3 text-gray-500 text-sm">Loading...</div>
+          ) : classes.length === 0 ? (
+            <Link
+              href="/home?addClasses=1"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-cyan-400 hover:bg-cyan-500/10"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">Add classes</span>
+            </Link>
+          ) : (
+            classes.map((cls) => {
+              const label = cls.code && cls.title ? `${cls.code} – ${cls.title}` : (cls.title || cls.code || 'Untitled');
+              const isActive = pathname === `/classes/${cls.id}`;
+              return (
+                <Link
+                  key={cls.id}
+                  href={`/classes/${cls.id}`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-cyan-500/10 text-cyan-400'
+                      : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
+                  }`}
+                >
+                  <BookOpen className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium truncate" title={label}>{label}</span>
+                </Link>
+              );
+            })
+          )}
         </div>
       </nav>
 
