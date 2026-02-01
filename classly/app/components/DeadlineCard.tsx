@@ -1,13 +1,24 @@
 'use client';
 
 import { BookOpen, ClipboardCheck, MessageCircle, Code, Clock } from 'lucide-react';
-import { Deadline } from '../lib/mockData';
 
-interface DeadlineCardProps {
-  deadline: Deadline;
+// Generic deadline interface for the component
+interface DeadlineDisplay {
+  id: string;
+  title: string;
+  course: string;
+  platform: 'canvas' | 'gradescope' | 'campuswire' | 'prairielearn';
+  type: string;
+  dueDate: string;
+  dueTime: string;
+  status: string;
 }
 
-const platformStyles: Record<Deadline['platform'], { label: string; classes: string; icon: React.ReactNode }> = {
+interface DeadlineCardProps {
+  deadline: DeadlineDisplay;
+}
+
+const platformStyles: Record<DeadlineDisplay['platform'], { label: string; classes: string; icon: React.ReactNode }> = {
   canvas: {
     label: 'Canvas',
     classes: 'text-red-400 bg-red-500/10',
@@ -64,7 +75,7 @@ function DeadlineCard({ deadline }: DeadlineCardProps) {
 }
 
 interface DeadlinesListProps {
-  deadlines: Deadline[];
+  deadlines: DeadlineDisplay[];
 }
 
 export function DeadlinesList({ deadlines }: DeadlinesListProps) {
@@ -77,9 +88,17 @@ export function DeadlinesList({ deadlines }: DeadlinesListProps) {
         </button>
       </div>
       <div className="p-4 space-y-4">
-        {deadlines.map((deadline) => (
-          <DeadlineCard key={deadline.id} deadline={deadline} />
-        ))}
+        {deadlines.length > 0 ? (
+          deadlines.map((deadline) => (
+            <DeadlineCard key={deadline.id} deadline={deadline} />
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <Clock className="w-8 h-8 mx-auto mb-3 opacity-50" />
+            <p>No upcoming deadlines</p>
+            <p className="text-sm mt-1">Connect your platforms to see assignments</p>
+          </div>
+        )}
       </div>
     </div>
   );

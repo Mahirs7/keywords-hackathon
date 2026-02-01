@@ -1,15 +1,59 @@
 'use client';
 
 import Header from '../../components/Header';
-import { mockUser, mockGradescopeSubmissions, getGreeting, getFormattedDate } from '../../lib/mockData';
-import { ClipboardCheck, Calendar, Clock, ExternalLink, CheckCircle, AlertCircle, RefreshCw, Upload } from 'lucide-react';
+import { useUser, useDeadlines, useCourses, usePlatforms, triggerSync } from '../../lib/hooks/useData';
+import { getGreeting, getFormattedDate } from '../../lib/mockData';
+import { ClipboardCheck, Calendar, ExternalLink, CheckCircle, AlertCircle, RefreshCw, Upload, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function GradescopePage() {
+  const { user, loading: userLoading } = useUser();
+  const { deadlines, loading: deadlinesLoading, refetch: refetchDeadlines } = useDeadlines({ platform: 'gradescope' });
+  const { courses, loading: coursesLoading } = useCourses();
+  const { platforms } = usePlatforms();
+  const [syncing, setSyncing] = useState(false);
+
+  const isLoading = userLoading || deadlinesLoading || coursesLoading;
+
+  // Get Gradescope-specific data
+  const gradescopePlatform = platforms.find(p => p.platform === 'gradescope');
+  const gradescopeCourses = courses.filter(c => c.platform === 'gradescope');
+  
+  // Count stats
+  const pendingCount = deadlines.filter(d => d.status === 'pending').length;
+  const submittedCount = deadlines.filter(d => d.status === 'submitted').length;
+  const gradedCount = deadlines.filter(d => d.status === 'graded').length;
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await triggerSync('gradescope');
+      setTimeout(() => {
+        refetchDeadlines();
+        setSyncing(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Sync failed:', error);
+      setSyncing(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+          <p className="text-gray-400">Loading Gradescope data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
       <Header 
         greeting={getGreeting()} 
-        userName={mockUser.name} 
+        userName={user?.name || 'Student'} 
         date={getFormattedDate()} 
       />
 
@@ -21,18 +65,27 @@ export default function GradescopePage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Gradescope</h2>
-            <p className="text-gray-400">2 submissions due this week</p>
+            <p className="text-gray-400">{pendingCount} submissions due</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">Last synced: 10 min ago</span>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#1a1f26] text-gray-300 rounded-xl hover:bg-gray-800 transition-colors border border-gray-700">
-            <RefreshCw className="w-4 h-4" />
-            Sync Now
+          {gradescopePlatform?.last_synced && (
+            <span className="text-sm text-gray-500">
+              Last synced: {new Date(gradescopePlatform.last_synced).toLocaleTimeString()}
+            </span>
+          )}
+          <button 
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 bg-[#1a1f26] text-gray-300 rounded-xl hover:bg-gray-800 transition-colors border border-gray-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Now'}
           </button>
           <a 
             href="https://gradescope.com" 
             target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
@@ -44,9 +97,9 @@ export default function GradescopePage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Due Soon', value: '2', color: 'text-orange-400', bg: 'bg-orange-500/10' },
-          { label: 'Submitted', value: '8', color: 'text-green-400', bg: 'bg-green-500/10' },
-          { label: 'Graded', value: '6', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: 'Due Soon', value: pendingCount.toString(), color: 'text-orange-400', bg: 'bg-orange-500/10' },
+          { label: 'Submitted', value: submittedCount.toString(), color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: 'Graded', value: gradedCount.toString(), color: 'text-blue-400', bg: 'bg-blue-500/10' },
           { label: 'Regrade Requests', value: '0', color: 'text-purple-400', bg: 'bg-purple-500/10' },
         ].map((stat, i) => (
           <div key={i} className={`${stat.bg} rounded-xl p-4 border border-gray-800`}>
@@ -68,65 +121,67 @@ export default function GradescopePage() {
             </div>
           </div>
           <div className="p-4 space-y-3">
-            {mockGradescopeSubmissions.map((sub) => (
-              <div 
-                key={sub.id}
-                className="p-4 bg-[#1a1f26] rounded-xl border border-gray-800 hover:border-gray-700 transition-all"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="w-5 h-5 text-orange-400" />
-                      <h4 className="text-white font-medium">{sub.title}</h4>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-2">{sub.course}</p>
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1 text-sm text-gray-400">
-                        <Calendar className="w-4 h-4" />
-                        Due {new Date(sub.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
-                      {sub.lateDays > 0 && (
-                        <span className="text-sm text-yellow-400">
-                          {sub.lateDays} late days available
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors">
-                    <Upload className="w-4 h-4" />
-                    Submit
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Graded Assignments */}
-            <div className="pt-4 border-t border-gray-800">
-              <p className="text-gray-500 text-sm mb-3">Recently Graded</p>
-              {[
-                { title: 'Lab 4: Hash Tables', course: 'CS 101', grade: '95/100', time: '2 days ago' },
-                { title: 'MP1: Image Processing', course: 'CS 444', grade: '88/100', time: '1 week ago' },
-              ].map((item, i) => (
+            {deadlines.filter(d => d.status === 'pending').length > 0 ? (
+              deadlines.filter(d => d.status === 'pending').map((sub) => (
                 <div 
-                  key={i}
-                  className="p-4 bg-[#1a1f26] rounded-xl border border-gray-800 mb-3"
+                  key={sub.id}
+                  className="p-4 bg-[#1a1f26] rounded-xl border border-gray-800 hover:border-gray-700 transition-all"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      <div>
-                        <h4 className="text-white font-medium">{item.title}</h4>
-                        <p className="text-sm text-gray-500">{item.course}</p>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-5 h-5 text-orange-400" />
+                        <h4 className="text-white font-medium">{sub.title}</h4>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">{sub.course_name}</p>
+                      <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1 text-sm text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          Due {sub.due_date ? new Date(sub.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date'}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-green-400 font-semibold">{item.grade}</p>
-                      <p className="text-xs text-gray-500">{item.time}</p>
-                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      Submit
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <ClipboardCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No pending submissions</p>
+              </div>
+            )}
+
+            {/* Graded Assignments */}
+            {deadlines.filter(d => d.status === 'graded').length > 0 && (
+              <div className="pt-4 border-t border-gray-800">
+                <p className="text-gray-500 text-sm mb-3">Recently Graded</p>
+                {deadlines.filter(d => d.status === 'graded').slice(0, 3).map((item) => (
+                  <div 
+                    key={item.id}
+                    className="p-4 bg-[#1a1f26] rounded-xl border border-gray-800 mb-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                        <div>
+                          <h4 className="text-white font-medium">{item.title}</h4>
+                          <p className="text-sm text-gray-500">{item.course_name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {item.grade && (
+                          <p className="text-green-400 font-semibold">{item.grade}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -148,24 +203,28 @@ export default function GradescopePage() {
           <div className="bg-[#0f1419] rounded-2xl border border-gray-800 p-5">
             <h3 className="text-lg font-semibold text-white mb-4">Grade Distribution</h3>
             <div className="space-y-3">
-              {[
-                { course: 'CS 101', avg: 92, letter: 'A-' },
-                { course: 'CS 444', avg: 88, letter: 'B+' },
-              ].map((course, i) => (
-                <div key={i} className="bg-[#1a1f26] rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-medium">{course.course}</span>
-                    <span className="text-green-400 font-semibold">{course.letter}</span>
+              {gradescopeCourses.length > 0 ? (
+                gradescopeCourses.map((course) => (
+                  <div key={course.id} className="bg-[#1a1f26] rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-white font-medium">{course.code}</span>
+                      {course.grade && (
+                        <span className="text-green-400 font-semibold">{course.grade}</span>
+                      )}
+                    </div>
+                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-cyan-500 to-green-500 rounded-full"
+                        style={{ width: '85%' }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-cyan-500 to-green-500 rounded-full"
-                      style={{ width: `${course.avg}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{course.avg}% average</p>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                  No courses synced yet
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

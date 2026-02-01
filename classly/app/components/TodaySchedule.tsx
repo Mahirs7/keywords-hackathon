@@ -1,10 +1,21 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
-import { ScheduleItem } from '../lib/mockData';
+import { ChevronRight, Calendar } from 'lucide-react';
+
+// Generic schedule item interface for the component
+interface ScheduleItemDisplay {
+  id: string;
+  title: string;
+  type: string;
+  startTime: string;
+  duration: string;
+  location?: string;
+  color: string;
+  isActive?: boolean;
+}
 
 interface ScheduleItemCardProps {
-  item: ScheduleItem;
+  item: ScheduleItemDisplay;
 }
 
 export function ScheduleItemCard({ item }: ScheduleItemCardProps) {
@@ -44,7 +55,7 @@ export function ScheduleItemCard({ item }: ScheduleItemCardProps) {
 }
 
 interface TodayScheduleProps {
-  schedule: ScheduleItem[];
+  schedule: ScheduleItemDisplay[];
 }
 
 export default function TodaySchedule({ schedule }: TodayScheduleProps) {
@@ -58,9 +69,17 @@ export default function TodaySchedule({ schedule }: TodayScheduleProps) {
         </button>
       </div>
       <div className="p-4">
-        {schedule.map((item) => (
-          <ScheduleItemCard key={item.id} item={item} />
-        ))}
+        {schedule.length > 0 ? (
+          schedule.map((item) => (
+            <ScheduleItemCard key={item.id} item={item} />
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <Calendar className="w-8 h-8 mx-auto mb-3 opacity-50" />
+            <p>No events scheduled for today</p>
+            <p className="text-sm mt-1">Add classes or study sessions</p>
+          </div>
+        )}
       </div>
     </div>
   );

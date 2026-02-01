@@ -15,7 +15,7 @@ import {
 import { createClient } from '@/app/lib/supabase/client';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/home', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/schedule', label: 'Schedule', icon: Calendar },
 ];
 
