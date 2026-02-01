@@ -26,8 +26,23 @@ export function useUser() {
     
     async function fetchUser() {
       try {
+        // Try to get authenticated user first
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) {
+        
+        // Use auth user ID or fall back to first user in table for testing
+        let userId = authUser?.id;
+        
+        if (!userId) {
+          // Fallback: get first user from users table (for testing without auth)
+          const { data: firstUser } = await supabase
+            .from('users')
+            .select('id')
+            .limit(1)
+            .single();
+          userId = firstUser?.id;
+        }
+        
+        if (!userId) {
           setUser(null);
           return;
         }
@@ -35,7 +50,7 @@ export function useUser() {
         const { data, error } = await supabase
           .from('users')
           .select('*')
-          .eq('id', authUser.id)
+          .eq('id', userId)
           .single();
 
         if (error) throw error;

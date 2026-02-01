@@ -9,8 +9,10 @@ import {
   Settings,
   ChevronLeft,
   LogOut,
-  Bot
-  Sparkles
+  Bot,
+  Sparkles,
+  ClipboardCheck,
+  MessageCircle
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase/client';
 import { useClasses } from '@/app/lib/hooks/useData';
@@ -31,6 +33,7 @@ const platforms = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { classes, loading: classesLoading } = useClasses();
   
   // Try to create Supabase client, but handle gracefully if not configured
   let supabase;

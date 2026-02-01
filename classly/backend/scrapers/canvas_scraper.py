@@ -5,6 +5,7 @@ Used by the backend to sync assignments from user's course_sources (Canvas links
 
 import re
 import time
+from typing import Optional, List, Dict
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
@@ -23,19 +24,19 @@ except ImportError:
 CANVAS_BASE_URL = "https://canvas.illinois.edu/"
 
 
-def _parse_course_id_from_url(course_url: str) -> int | None:
+def _parse_course_id_from_url(course_url: str) -> Optional[int]:
     """Extract Canvas numeric course id from URL like https://canvas.illinois.edu/courses/66465"""
     path = urlparse(course_url).path
     m = re.match(r"^/courses/(\d+)(?:/.*)?$", path)
     return int(m.group(1)) if m else None
 
 
-def _parse_due_text(raw: str) -> str | None:
+def _parse_due_text(raw: str) -> Optional[str]:
     t = " ".join(raw.split()).strip()
     return t if t else None
 
 
-def get_assignments_for_course(driver: webdriver.Chrome, course_id: int) -> list[dict]:
+def get_assignments_for_course(driver: webdriver.Chrome, course_id: int) -> List[Dict]:
     """
     Scrape /courses/<id>/assignments for one course.
     Returns list of {id, title, url, due_text_raw}.
@@ -78,9 +79,9 @@ def scrape_assignments_for_course_url(
     course_url: str,
     *,
     headless: bool = True,
-    driver: webdriver.Chrome | None = None,
-    profile_dir: str | None = None,
-) -> list[dict]:
+    driver: Optional[webdriver.Chrome] = None,
+    profile_dir: Optional[str] = None,
+) -> List[Dict]:
     """
     Scrape assignments for a single Canvas course URL.
 

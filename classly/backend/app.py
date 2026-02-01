@@ -58,7 +58,7 @@ def index():
             "platforms": "/api/platforms",
             "auth": "/api/auth",
             "ai": "/api/ai",
-            "calendar_oauth": "/api/calendar/oauth"
+            "calendar_oauth": "/api/calendar/oauth",
             "rag": "/api/rag"
         }
     })
