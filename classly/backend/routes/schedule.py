@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 schedule_bp = Blueprint('schedule', __name__)
 
+@auth_required
 # Mock data - will be replaced with real Supabase calls
 MOCK_SCHEDULE = [
     {

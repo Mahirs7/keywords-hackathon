@@ -6,6 +6,8 @@ User authentication and session management
 from flask import Blueprint, jsonify, request
 import os
 
+from db.supabase_client import supabase
+
 auth_bp = Blueprint('auth', __name__)
 
 # Mock user data
